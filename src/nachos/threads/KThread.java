@@ -83,7 +83,7 @@ public class KThread {
 	 */
 	public KThread(Runnable target) {
 		this();
-		System.out.println("KThread.KThread(Runnable target) : id="+id);
+		System.out.println("KThread.KThread(Runnable target) : id=" + id);
 		this.target = target;
 	}
 
@@ -504,18 +504,18 @@ public class KThread {
 	 * Integer being used by the lister thread to count the received words one
 	 * at a time
 	 */
-	private int wordCount = -1;
+	private int wordToTransfer = -1;
 
-	public void setWordCount(int wordCount) {
-		this.wordCount = wordCount;
+	public void setWordToTransfer(int wordToTransfer) {
+		this.wordToTransfer = wordToTransfer;
 	}
 
-	public int getWordCount() {
-		return this.wordCount;
+	public int getWordToTransfer() {
+		return this.wordToTransfer;
 	}
 
 	public void wakeJoinedThreads() {
-		boolean intStatus = Machine.interrupt().disable();
+		boolean oldInterruptStatus = Machine.interrupt().disable();
 		KThread thread = null;
 		do {
 			thread = waitingKThreadListToJoin.nextThread();
@@ -523,6 +523,6 @@ public class KThread {
 				thread.ready();
 			}
 		} while (thread != null);
-		Machine.interrupt().restore(intStatus);
+		Machine.interrupt().restore(oldInterruptStatus);
 	}
 }

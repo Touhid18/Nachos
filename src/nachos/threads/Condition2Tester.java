@@ -9,9 +9,9 @@ import java.util.Random;
  */
 public class Condition2Tester {
 
-	private static final int maxNumActions = 100000;
-	private static final int numProducers = 10;
-	private static final int numConsumers = 100;
+	private static final int maxNumActions = 100;
+	private static final int numProducers = 2;
+	private static final int numConsumers = 5;
 
 	/**
 	 * ProdConsBuffer class, which implements a producer/consumer buffer. This
@@ -196,7 +196,7 @@ public class Condition2Tester {
 
 		public void run() {
 
-			System.out.println("** Producer #" + who + " begins");
+			System.out.println("++ Producer #" + who + " begins");
 			/* Loop */
 			while (true) {
 				/* Acquire the mutex */
@@ -206,7 +206,7 @@ public class Condition2Tester {
 				 * while loop to avoid spurious wake-ups
 				 */
 				while (!buffer.isDone && buffer.isFull) {
-					System.out.println("** Producer #" + who
+					System.out.println("++ Producer #" + who
 							+ " waits for the buffer to not be full");
 					buffer.isNotFullCond.sleep(); /*
 												 * releases the mutex and
@@ -225,7 +225,7 @@ public class Condition2Tester {
 				}
 				/* Produce an item */
 				int producedItem = buffer.generateRandomItem();
-				System.out.println("** Producer #" + who + " produces "
+				System.out.println("++ Producer #" + who + " produces "
 						+ producedItem);
 				buffer.produceItem(producedItem);
 				/* Wake up potential consumers */
@@ -235,7 +235,7 @@ public class Condition2Tester {
 				/* Yield so that somebody else has a chance to run */
 				KThread.yield();
 			}
-			System.out.println("** Producer #" + who + " exits");
+			System.out.println("++ Producer #" + who + " exits");
 
 			/* Signal that the thread is finished */
 			buffer.mutex.acquire();
@@ -258,7 +258,7 @@ public class Condition2Tester {
 
 		public void run() {
 
-			System.out.println("** Consumer #" + who + " begins");
+			System.out.println("-- Consumer #" + who + " begins");
 			/* Loop */
 			while (true) {
 
@@ -269,7 +269,7 @@ public class Condition2Tester {
 				 * while loop to avoid spurious wake-ups
 				 */
 				while (!buffer.isDone && buffer.isEmpty) {
-					System.out.println("** Consumer #" + who
+					System.out.println("-- Consumer #" + who
 							+ " waits for the buffer to not be empty");
 					buffer.isNotEmptyCond.sleep(); /*
 													 * releases the mutex and
@@ -289,7 +289,7 @@ public class Condition2Tester {
 
 				/* Consume an item */
 				int consumedItem = buffer.consumeItem();
-				System.out.println("** Consumer #" + who + " consumes item "
+				System.out.println("-- Consumer #" + who + " consumes item "
 						+ consumedItem);
 				/* Wake up potential producers */
 				buffer.isNotFullCond.wake();
@@ -298,7 +298,7 @@ public class Condition2Tester {
 				/* Yield so that somebody else has a chance to run */
 				KThread.yield();
 			}
-			System.out.println("** Consumer #" + who + " exits");
+			System.out.println("-- Consumer #" + who + " exits");
 
 			/* Signal that the thread is finished */
 			buffer.mutex.acquire();
