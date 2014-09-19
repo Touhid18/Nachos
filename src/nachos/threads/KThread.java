@@ -54,10 +54,12 @@ public class KThread {
 	 * create an idle thread as well.
 	 */
 	public KThread() {
+		System.out.println("KThread.KThread() : id=" + id);
 		if (currentThread != null) {
 			tcb = new TCB();
-		}
-		else {
+			waitingKThreadListToJoin = ThreadedKernel.scheduler
+					.newThreadQueue(true);
+		} else {
 			readyQueue = ThreadedKernel.scheduler.newThreadQueue(false);
 			readyQueue.acquire(this);
 
@@ -66,6 +68,9 @@ public class KThread {
 			name = "main";
 			restoreState();
 
+			waitingKThreadListToJoin = ThreadedKernel.scheduler
+					.newThreadQueue(true);
+
 			createIdleThread();
 		}
 	}
@@ -73,17 +78,20 @@ public class KThread {
 	/**
 	 * Allocate a new KThread.
 	 * 
-	 * @param target the object whose <tt>run</tt> method is called.
+	 * @param target
+	 *            the object whose <tt>run</tt> method is called.
 	 */
 	public KThread(Runnable target) {
 		this();
+		System.out.println("KThread.KThread(Runnable target) : id="+id);
 		this.target = target;
 	}
 
 	/**
 	 * Set the target of this thread.
 	 * 
-	 * @param target the object whose <tt>run</tt> method is called.
+	 * @param target
+	 *            the object whose <tt>run</tt> method is called.
 	 * @return this thread.
 	 */
 	public KThread setTarget(Runnable target) {
@@ -97,7 +105,8 @@ public class KThread {
 	 * Set the name of this thread. This name is used for debugging purposes
 	 * only.
 	 * 
-	 * @param name the name to give to this thread.
+	 * @param name
+	 *            the name to give to this thread.
 	 * @return this thread.
 	 */
 	public KThread setName(String name) {
@@ -194,6 +203,10 @@ public class KThread {
 	public static void finish() {
 		Lib.debug(dbgThread, "Finishing thread: " + currentThread.toString());
 
+		// FIXME Touhid :: Wake threads that have joined the currently running
+		// thread
+		currentThread.wakeJoinedThreads();
+
 		Machine.interrupt().disable();
 
 		Machine.autoGrader().finishingCurrentThread();
@@ -283,6 +296,16 @@ public class KThread {
 	public void join() {
 		Lib.debug(dbgThread, "Joining to thread: " + toString());
 
+		// FIXME Touhid :: join() edit starts
+		boolean intStatus = Machine.interrupt().setStatus(false);
+
+		if (status != statusFinished) { // Joinee is not finished yet
+			waitingKThreadListToJoin.waitForAccess(currentThread());
+			KThread.sleep();
+		}
+		Machine.interrupt().restore(intStatus);
+		// join() edit ends
+
 		Lib.assertTrue(this != currentThread);
 
 	}
@@ -340,8 +363,9 @@ public class KThread {
 	 * from running to blocked or ready (depending on whether the thread is
 	 * sleeping or yielding).
 	 * 
-	 * @param finishing <tt>true</tt> if the current thread is finished, and
-	 * should be destroyed by the new thread.
+	 * @param finishing
+	 *            <tt>true</tt> if the current thread is finished, and should be
+	 *            destroyed by the new thread.
 	 */
 	private void run() {
 		Lib.assertTrue(Machine.interrupt().disabled());
@@ -391,11 +415,13 @@ public class KThread {
 		Lib.assertTrue(this == currentThread);
 	}
 
+	@SuppressWarnings("unused")
 	private static class PingTest implements Runnable {
-		PingTest(int which) {
+		public PingTest(int which) {
 			this.which = which;
 		}
 
+		@SuppressWarnings("static-access")
 		public void run() {
 			for (int i = 0; i < 5; i++) {
 				System.out.println("*** thread " + which + " looped " + i
@@ -413,8 +439,9 @@ public class KThread {
 	public static void selfTest() {
 		Lib.debug(dbgThread, "Enter KThread.selfTest");
 
-		new KThread(new PingTest(1)).setName("forked thread").fork();
-		new PingTest(0).run();
+		// new KThread(new PingTest(1)).setName("forked thread").fork();
+		// new PingTest(0).run();
+		KThreadJoinTester.testKThreadJoin();
 	}
 
 	private static final char dbgThread = 't';
@@ -465,4 +492,37 @@ public class KThread {
 	private static KThread toBeDestroyed = null;
 
 	private static KThread idleThread = null;
+
+	/** FIXME Touhid :: edited block */
+
+	/**
+	 * The thread-queue to keep track of the threads that are joining the
+	 * current thread
+	 */
+	private ThreadQueue waitingKThreadListToJoin = null;
+	/**
+	 * Integer being used by the lister thread to count the received words one
+	 * at a time
+	 */
+	private int wordCount = -1;
+
+	public void setWordCount(int wordCount) {
+		this.wordCount = wordCount;
+	}
+
+	public int getWordCount() {
+		return this.wordCount;
+	}
+
+	public void wakeJoinedThreads() {
+		boolean intStatus = Machine.interrupt().disable();
+		KThread thread = null;
+		do {
+			thread = waitingKThreadListToJoin.nextThread();
+			if (thread != null) {
+				thread.ready();
+			}
+		} while (thread != null);
+		Machine.interrupt().restore(intStatus);
+	}
 }

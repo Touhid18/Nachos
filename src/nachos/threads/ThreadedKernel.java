@@ -5,6 +5,7 @@ import nachos.machine.*;
 /**
  * A multi-threaded OS kernel.
  */
+@SuppressWarnings("unused")
 public class ThreadedKernel extends Kernel {
 	/**
 	 * Allocate a new multi-threaded kernel.
@@ -32,6 +33,7 @@ public class ThreadedKernel extends Kernel {
 			fileSystem = null;
 
 		// start threading
+		System.out.println("ThreadedKernel.initialize()");
 		new KThread(null);
 
 		alarm = new Alarm();

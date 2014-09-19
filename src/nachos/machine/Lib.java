@@ -3,10 +3,9 @@
 package nachos.machine;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.security.PrivilegedAction;
 import java.util.Random;
 
 /**
@@ -502,6 +501,7 @@ public final class Lib {
 	 * @param className the name of the class to instantiate.
 	 * @return a new instance of the class.
 	 */
+	@SuppressWarnings("unchecked")
 	public static Object constructObject(String className) {
 		try {
 			// kamil - workaround for Java 1.4

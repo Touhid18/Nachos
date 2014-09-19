@@ -22,7 +22,8 @@ public class RoundRobinScheduler extends Scheduler {
 	/**
 	 * Allocate a new FIFO thread queue.
 	 * 
-	 * @param transferPriority ignored. Round robin schedulers have no priority.
+	 * @param transferPriority
+	 *            ignored. Round robin schedulers have no priority.
 	 * @return a new FIFO thread queue.
 	 */
 	public ThreadQueue newThreadQueue(boolean transferPriority) {
@@ -33,9 +34,12 @@ public class RoundRobinScheduler extends Scheduler {
 		/**
 		 * Add a thread to the end of the wait queue.
 		 * 
-		 * @param thread the thread to append to the queue.
+		 * @param thread
+		 *            the thread to append to the queue.
 		 */
 		public void waitForAccess(KThread thread) {
+			System.out.println("  ::> RoundRobinScheduler : waitForAccess : "
+					+ thread.toString());
 			Lib.assertTrue(Machine.interrupt().disabled());
 
 			waitQueue.add(thread);
@@ -45,7 +49,7 @@ public class RoundRobinScheduler extends Scheduler {
 		 * Remove a thread from the beginning of the queue.
 		 * 
 		 * @return the first thread on the queue, or <tt>null</tt> if the queue
-		 * is empty.
+		 *         is empty.
 		 */
 		public KThread nextThread() {
 			Lib.assertTrue(Machine.interrupt().disabled());
@@ -70,6 +74,7 @@ public class RoundRobinScheduler extends Scheduler {
 		/**
 		 * Print out the contents of the queue.
 		 */
+		@SuppressWarnings("rawtypes")
 		public void print() {
 			Lib.assertTrue(Machine.interrupt().disabled());
 
